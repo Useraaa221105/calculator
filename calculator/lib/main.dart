@@ -76,7 +76,6 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
           if (userInput.isEmpty) return;
         }
 
-        // ❗ Проверяем, что выражение не состоит только из нулей
         if (RegExp(r'^0+(\.0+)?$').hasMatch(userInput)) {
           result = 'Error';
           errorState = true;
@@ -96,14 +95,18 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         return;
       }
 
-      if (value == '√') {
+      // ----------------------  COS  ------------------------
+      if (value == 'cos') {
         String lastNumber = _getLastNumber(userInput);
+
+        // Если нет числа — использовать результат
         if (lastNumber.isEmpty && result != '0') {
           double? num = double.tryParse(result);
-          if (num != null && num >= 0) {
-            double root = sqrt(num);
-            result = _formatNumber(root);
-            userInput = '√(${_formatNumber(num)})=';
+          if (num != null) {
+            double rad = num * pi / 180;
+            double cosValue = cos(rad);
+            result = _formatNumber(cosValue);
+            userInput = 'cos(${_formatNumber(num)})=';
             justCalculated = true;
           } else {
             result = 'Error';
@@ -111,16 +114,20 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
           }
           return;
         }
+
         if (lastNumber.isEmpty) return;
+
         double? num = double.tryParse(lastNumber);
-        if (num != null && num >= 0) {
-          double root = sqrt(num);
+        if (num != null) {
+          double rad = num * pi / 180;
+          double cosValue = cos(rad);
+
           userInput = userInput.replaceRange(
             userInput.length - lastNumber.length,
             userInput.length,
-            _formatNumber(root),
+            _formatNumber(cosValue),
           );
-          result = _formatNumber(root);
+          result = _formatNumber(cosValue);
           justCalculated = true;
         } else {
           result = 'Error';
@@ -128,8 +135,8 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         }
         return;
       }
+      // ----------------------------------------------------
 
-      // после вычисления новое число
       if (justCalculated && RegExp(r'[0-9.]').hasMatch(value)) {
         userInput = value;
         result = '0';
@@ -137,14 +144,12 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         return;
       }
 
-      // продолжаем выражение
       if (justCalculated && _isOperator(value)) {
         userInput = result + value;
         justCalculated = false;
         return;
       }
 
-      // защита от двойных операторов
       if (userInput.isNotEmpty &&
           _isOperator(userInput[userInput.length - 1]) &&
           _isOperator(value)) {
@@ -152,14 +157,12 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         return;
       }
 
-      // при нажатии точки в начале числа
       if (value == '.' &&
           (userInput.isEmpty || _isOperator(userInput[userInput.length - 1]))) {
         userInput += '0.';
         return;
       }
 
-      // одна точка на число
       if (value == '.') {
         int lastOp = -1;
         for (int i = userInput.length - 1; i >= 0; i--) {
@@ -172,11 +175,10 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         if (currentNumber.contains('.')) return;
       }
 
-      // 🚫 запрещаем вводить несколько нулей подряд в начале числа
       if (value == '0') {
         String last = _getLastNumber(userInput);
         if (last == '0' && !_isOperator(userInput[userInput.length - 1])) {
-          return; // не добавляем второй ноль
+          return;
         }
       }
 
@@ -214,7 +216,6 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
       double baseVal = double.tryParse(baseStr) ?? 0;
       double expVal = double.tryParse(expStr) ?? 0;
 
-      // если всё нули — ошибка
       if (baseVal == 0 && expVal > 0) {
         return '0';
       }
@@ -243,8 +244,8 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
     exp = exp.replaceAll(' ', '');
     if (exp.isEmpty) return 0;
 
-    // * и /
     List<String> tokens = exp.split(RegExp(r'(?=[*/])|(?<=[*/])'));
+
     for (int i = 0; i < tokens.length; i++) {
       if (tokens[i] == '*' || tokens[i] == '/') {
         double left = double.tryParse(tokens[i - 1]) ?? 0;
@@ -256,9 +257,9 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
       }
     }
 
-    // + и -
     String joined = tokens.join();
     List<String> addParts = joined.split(RegExp(r'(?=[+-])|(?<=[+-])'));
+
     double total = 0;
     String op = '+';
     for (var part in addParts) {
@@ -348,7 +349,7 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
                     children: [
                       buildButton('C', Colors.grey),
                       buildButton('←', Colors.grey),
-                      buildButton('√', Colors.orange),
+                      buildButton('cos', Colors.orange), // ← КНОПКА COS
                       buildButton('^', Colors.orange),
                     ],
                   ),
